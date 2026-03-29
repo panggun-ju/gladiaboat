@@ -99,6 +99,9 @@ export class Player extends Boat {
         this.slashTimer = 0;
         this.currentSlash = null; // 활성화된 SlashArc 객체
         this.wasSlashing = false;
+        
+        // 노 젓기 쿨타임 (무한 연타 방지)
+        this.rowCooldown = 0;
 
         // 렌더링 색상 오버라이드
         this.color = '#3b8b5a';
@@ -107,6 +110,7 @@ export class Player extends Boat {
     update(dt, inputManager) {
         // 타이머 감소
         if (this.slashTimer > 0) this.slashTimer -= dt;
+        if (this.rowCooldown > 0) this.rowCooldown -= dt;
 
         // 공격 유지 시간이 끝났으면 히트박스 제거
         if (this.currentSlash && this.slashTimer < this.SLASH_COOLDOWN - this.SLASH_DURATION) {
@@ -162,37 +166,44 @@ export class Player extends Boat {
 
         // 2. 상태에 따른 물리 행동 처리
         // 공격 중(이펙트 유지 중)일 때는 노를 저을 수 없음 (이동 불가 패널티)
-        if (this.state === BoatState.ROWING && !isAttackingNow) {
+        if (this.state === BoatState.ROWING && !isAttackingNow && this.rowCooldown <= 0) {
             const dragVec = inputManager.getDragVector();
             const dragDist = dragVec.mag();
             
-            // 드래그가 너무 짧으면 무시
-            if (dragDist > 10) {
-                // 드래그 벡터의 방향에 따라 보트에 추진력과 회전력을 가함
-                // 마우스를 뒤로 당기면(배의 후방으로 드래그) 앞으로 나아가는 직관적인 노 젓기
-                
-                // 역방향 벡터 (우리가 노를 물속에 박고 당기는 방향의 반대 = 배가 나아갈 방향)
+            // 드래그 시작 시점의 마우스 위치를 이용해 배의 왼쪽/오른쪽 판별
+            const startPos = inputManager.dragStartPos;
+            
+            if (dragDist > 30) {
+                // 당기는 방향의 반대(앞쪽)
                 const thrustDir = dragVec.scale(-1).normalize();
                 const forward = this.getForwardVec();
                 const right = this.getRightVec();
 
-                // 전진 성분 (내적)
-                const forwardComponent = thrustDir.dot(forward);
-                // 회전 성분 (외적/우측 벡터와의 내적)
-                const sideComponent = thrustDir.dot(right);
+                // 1. 배의 왼쪽/오른쪽 판별 (드래그 시작점 기준)
+                const toStartPos = startPos.sub(this.pos);
+                // 내적을 통해 우측(+)인지 좌측(-)인지 판별
+                const isRightSide = toStartPos.dot(right) > 0;
 
-                // 추진력 적용 (드래그 길이에 비례하되 최대치 캡)
-                const appliedThrust = Math.min(dragDist, 150) * this.ROW_THRUST_SCALE * dt;
+                // 2. 추진력 (전진 성분만 추출. 뒤로 당길수록 커짐)
+                // 카누 특성상 항상 배의 '정면'으로 힘이 가해짐
+                const forwardComponent = Math.max(0, thrustDir.dot(forward));
+                const appliedThrust = forwardComponent * Math.min(dragDist, 150) * this.ROW_THRUST_SCALE * 3.0; // 펄스형이므로 수치 높임
                 
-                // 후진(뒤로 젓기)보다 전진의 효율이 더 좋도록 처리할 수도 있음
-                // 하지만 직관적 재미를 위해 단순히 힘 벡터를 더함
-                const force = thrustDir.scale(appliedThrust);
-                this.applyForce(force);
+                this.applyForce(forward.scale(appliedThrust));
 
-                // 회전력 적용
-                // 드래그를 양옆으로 하면 배가 그 방향으로 꺾임
-                const appliedTorque = sideComponent * Math.min(dragDist, 100) * this.ROW_TORQUE_SCALE * dt;
+                // 3. 회전력 (카누 메커니즘)
+                // 오른쪽 노를 저으면 좌회전(반시계, 음수 각도), 왼쪽 노를 저으면 우회전(시계, 양수 각도)
+                const torqueDirection = isRightSide ? -1 : 1;
+                // 강하게 당길수록 많이 꺾임
+                const appliedTorque = torqueDirection * Math.min(dragDist, 150) * this.ROW_TORQUE_SCALE * 2.0;
+                
                 this.applyTorque(appliedTorque);
+
+                // 4. 연속 드래그 방지 및 리듬감을 위한 쿨타임 (스트로크 한 번 후 잠깐 쉬어야 함)
+                this.rowCooldown = 0.3; // 0.3초 쿨타임
+                
+                // 스트로크 완료 후 드래그 시작점을 초기화하여 다시 클릭/드래그 해야만 다음 노를 저을 수 있게 강제
+                inputManager.dragStartPos = inputManager.mousePos.clone();
             }
         }
 

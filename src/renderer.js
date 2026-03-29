@@ -103,17 +103,26 @@ export class Renderer {
                 // 노 젓기: 파란색 고무줄 느낌
                 ctx.strokeStyle = `rgba(0, 150, 255, ${Math.min(1, 0.4 + dist/200)})`;
                 ctx.lineWidth = Math.min(15, 3 + dist/15); // 당길수록 두꺼워짐
-                ctx.setLineDash([10, 5]); // 점선으로 힘을 주는 느낌
+                ctx.setLineDash([10, 5]); 
             } else {
                 // 칼질: 붉은색 날카로운 선
                 ctx.strokeStyle = `rgba(255, 50, 50, ${Math.min(1, 0.5 + dist/150)})`;
-                ctx.lineWidth = Math.max(2, 10 - dist/30); // 당길수록 날카로워짐 (얇아짐)
+                ctx.lineWidth = Math.max(2, 10 - dist/30); // 당길수록 얇아짐
                 ctx.setLineDash([]);
             }
             
             ctx.lineCap = 'round';
             ctx.stroke();
             ctx.setLineDash([]);
+
+            // 노 젓기의 경우, 배의 어느 쪽을 젓고 있는지 알려주기 위해 시작점에 물결 파동을 크게 그려줌
+            if (state === InputState.ROWING) {
+                ctx.beginPath();
+                ctx.arc(startPos.x, startPos.y, 20 + Math.sin(performance.now()/50)*5, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
 
             // 시작점 마커
             ctx.beginPath();

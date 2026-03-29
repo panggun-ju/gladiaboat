@@ -39,6 +39,23 @@ export class Game {
         }
     }
 
+    triggerWavePulse(pos) {
+        // 주변 적들에게 강력한 넉백과 기절 적용
+        for (const enemy of this.enemies) {
+            const dist = enemy.pos.sub(pos).mag();
+            if (dist < 150) { // 파동 반경 150
+                const dir = enemy.pos.sub(pos).normalize();
+                enemy.applyForce(dir.scale(800));
+                enemy.stunTimer = 2.0;
+                enemy.aiState = 'stunned';
+                enemy.currentSlash = null;
+            }
+        }
+        
+        // 화면 흔들림
+        if(this.onShake) this.onShake(30, 0.5);
+    }
+
     update(dt, inputManager) {
         // 플레이어 업데이트
         this.player.update(dt, inputManager);
