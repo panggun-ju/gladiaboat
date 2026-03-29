@@ -37,6 +37,9 @@ class UIManager {
                     AudioSys.toggle();
                     audioToggleBtn.innerText = '🔊';
                 }
+
+                // 게임이 시작되었으므로 기본 커서를 숨깁니다 (style.css 에 정의된 클래스 추가)
+                document.body.classList.add('game-active');
             });
         }
     }
@@ -64,6 +67,8 @@ class UIManager {
 
     showLevelUpMenu(choices, onSelect) {
         this.isPaused = true;
+        document.body.classList.remove('game-active'); // 레벨업 시 커서 보이게 복구
+        
         this.levelUpScreen.classList.remove('hidden');
         this.cardsContainer.innerHTML = '';
 
@@ -77,6 +82,7 @@ class UIManager {
             card.addEventListener('click', () => {
                 onSelect(item);
                 this.levelUpScreen.classList.add('hidden');
+                document.body.classList.add('game-active'); // 게임으로 돌아가면 다시 숨김
                 this.isPaused = false;
             });
             this.cardsContainer.appendChild(card);
@@ -85,9 +91,12 @@ class UIManager {
 
     showGameOver(onRestart) {
         this.isGameOver = true;
+        document.body.classList.remove('game-active'); // 게임 오버 시 커서 보이게 복구
+        
         this.gameOverScreen.classList.remove('hidden');
         this.restartBtn.onclick = () => {
             this.gameOverScreen.classList.add('hidden');
+            document.body.classList.add('game-active'); // 재시작 시 다시 숨김
             this.isGameOver = false;
             onRestart();
         };

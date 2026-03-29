@@ -12,7 +12,12 @@ body {
     height: 100vh;
     overflow: hidden;
     font-family: sans-serif;
-    /* 게임에서 기본 커서를 완전히 숨깁니다 */
+    /* 게임 실행 중에는 JS에서 #game-container 에 클래스를 추가하여 커서를 숨깁니다 */
+    /* 기본적으로는 커서가 보이도록 수정 */
+}
+
+/* 게임 진행 중일 때만 마우스 숨김 */
+body.game-active {
     cursor: none; 
 }
 
