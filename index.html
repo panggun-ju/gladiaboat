@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gladiaboat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 메인 게임 렌더링 캔버스 -->
+        <canvas id="game-canvas"></canvas>
+        <!-- 커서 궤적 렌더링 캔버스 (게임 화면 위에 오버레이) -->
+        <canvas id="ui-canvas"></canvas>
+
+        <!-- HTML 기반 UI 오버레이 (상태바, 레벨업 등) -->
+        <div id="html-ui">
+            <div id="hud">
+                <div class="stat-bar">레벨 <span id="level-text">1</span> | 경험치: <span id="xp-text">0/5</span></div>
+            </div>
+            
+            <div id="level-up-screen" class="hidden">
+                <h2>레벨 업!</h2>
+                <p>업그레이드를 선택하세요</p>
+                <div id="cards-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
